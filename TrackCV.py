@@ -3,7 +3,7 @@ import mediapipe as mp
 import numpy as np
 
 
-def calculate_angle(a, b, c) -> float:
+def calculate_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> float:
     """
     Calculates the angle between 3 adjacent landmarks
     adding up to a maximum angle of 180 degrees.
@@ -20,9 +20,6 @@ def calculate_angle(a, b, c) -> float:
         126.86989764584402
 
     """
-    assert isinstance(a, np.ndarray), 'a is not a numpy array'
-    assert isinstance(b, np.ndarray), 'b is not a numpy array'
-    assert isinstance(c, np.ndarray), 'c is not a numpy array'
     # convert x,y coordinates of a,b,c to radians
     radian = np.arctan2(c[1] - b[1], c[0] - b[0]) - np.arctan2(a[1] - b[1],
                                                                a[0] - b[0])
@@ -33,7 +30,7 @@ def calculate_angle(a, b, c) -> float:
     return angle
 
 
-def get_coordinates(landmarks, lms) -> np.ndarray:
+def get_coordinates(landmarks, lms: list) -> np.ndarray:
     """
     Gets the interior angles of three tracked landmarks
     and returns them as a Numpy Array
@@ -60,18 +57,6 @@ def show_text(image, angle, lm_coords, frame_w, frame_h):
                 )
 
 
-def calculate_motion(group_landmarks, tracked_group, showText, image, frame_width, frame_height):
-    for lms in tracked_group.values():
-        # get coordinates
-        lm_coords = get_coordinates(group_landmarks, lms)
-        # get angle
-        angle = calculate_angle(lm_coords[0],
-                                lm_coords[1],
-                                lm_coords[2])
-        if showText:
-            show_text(image, angle, lm_coords, frame_width, frame_height)
-
-
 class TrackCV:
     """ TrackCV class
     Will create an instance of body landmarks that need to be
@@ -83,16 +68,20 @@ class TrackCV:
     mp_drawing_styles = mp.solutions.drawing_styles
     mp_holistic = mp.solutions.holistic
 
-    def __init__(self, tracked_pose=None, tracked_hands=None):  # TODO make sure None args work when None in self.track
+    def __init__(self, tracked_pose=None, tracked_left_hand=None, tracked_right_hand=None, showText=False):
         """
         Record body joint angles that need to be tracked
         :param tracked_pose: dict consisting of triad of points that will be tracked
         """
-
         self.tracked_pose = tracked_pose  # dict of center joint and
-        self.tracked_hands = tracked_hands
+        self.tracked_left_hand = tracked_left_hand
+        self.tracked_right_hand = tracked_right_hand
 
-    def track(self, frame_width=640, frame_height=480, min_dc=0.8, max_tc=0.8, showText=False):
+        self.showText = showText
+
+    def track(self, frame_width=1280, frame_height=800, min_dc=0.8, max_tc=0.8):
+        # TODO finish documentation
+        # TODO make flip an arg if showText is False
         """
 
         :return:
@@ -121,17 +110,22 @@ class TrackCV:
                 image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 image.flags.writeable = True
 
-                try:  # TODO add hands / and make function for 'for' loop contents
+                try:  # pose calculations
                     p_landmarks = results.pose_landmarks.landmark
-                    lh_landmarks = results.left_hand_landmarks.landmark
-                    #rh_landmarks = results.
-
-                    # calculate pose
-                    calculate_motion(p_landmarks, self.tracked_pose, showText, image, frame_width, frame_height)
-                    # calculate hands
-                    calculate_motion(lh_landmarks, self.tracked_hands, showText, image, frame_width, frame_height)
+                    self.calculate_motion(p_landmarks, self.tracked_pose, image, frame_width, frame_height)
                 except:
                     pass
+                try:  # left-hand calculations
+                    lh_landmarks = results.left_hand_landmarks.landmark
+                    self.calculate_motion(lh_landmarks, self.tracked_left_hand, image, frame_width, frame_height)
+                except:
+                    pass
+                try:  # right-hand calculations
+                    rh_landmarks = results.right_hand_landmarks.landmark
+                    self.calculate_motion(rh_landmarks, self.tracked_right_hand, image, frame_width, frame_height)
+                except:
+                    pass
+
                 # draw pose
                 self.mp_drawing.draw_landmarks(
                     image,
@@ -139,20 +133,38 @@ class TrackCV:
                     self.mp_holistic.POSE_CONNECTIONS,
                     landmark_drawing_spec=self.mp_drawing_styles
                         .get_default_pose_landmarks_style())
-                # TODO add hands
-                # draw hands
+                # draw left hand
                 self.mp_drawing.draw_landmarks(
                     image,
                     results.left_hand_landmarks,
                     self.mp_holistic.HAND_CONNECTIONS,
                     landmark_drawing_spec=self.mp_drawing_styles
                         .get_default_hand_landmarks_style())
+                # draw right hand
+                self.mp_drawing.draw_landmarks(
+                    image,
+                    results.right_hand_landmarks,
+                    self.mp_holistic.HAND_CONNECTIONS,
+                    landmark_drawing_spec=self.mp_drawing_styles
+                        .get_default_hand_landmarks_style())
+
                 cv2.imshow('MediaPipe Holistic', image)
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
         cap.release()
         cv2.destroyAllWindows()
         cv2.waitKey(1)
+
+    def calculate_motion(self, group_landmarks, tracked_group, image, frame_width, frame_height):
+        for lms in tracked_group.values():
+            # get coordinates
+            lm_coords = get_coordinates(group_landmarks, lms)
+            # get angle
+            angle = calculate_angle(lm_coords[0],
+                                    lm_coords[1],
+                                    lm_coords[2])
+            if self.showText:
+                show_text(image, angle, lm_coords, frame_width, frame_height)
 
     def get_tracked_angles(self, pose=True):
         """
@@ -163,5 +175,9 @@ class TrackCV:
             return list(self.tracked_pose.keys())
         else:
             return list(self.tracked_hands.keys())
+
+    def set_show_text(self, show: bool):
+        assert isinstance(show, bool), 'Input True or False'
+        self.showText = show
 
     # TODO possible setter angles, in case more want to be added
