@@ -1,9 +1,8 @@
-import cv2
-import mediapipe as mp
-import numpy as np
 import json
 import sys
 from typing import TypeVar
+
+# TODO: will have to generate a .txt/.json file w/ a save() func
 
 
 class TrackConfig:
@@ -12,4 +11,13 @@ class TrackConfig:
     def __init__(self, game: str, config: JSON):
         self.game = game
         self.config = config
+
+    def save(self):
+        return None
+
+    def modify(self):
+        return None
+
+
+
 

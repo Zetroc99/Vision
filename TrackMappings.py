@@ -1,8 +1,11 @@
 import TrackCV as tcv
 import numpy as np
-import pynput
+from pynput import mouse, keyboard
 
+_COMMON_OUTPUTS = ('JUMP', 'FORWARD', 'BACKWARD', 'LEFT', 'RIGHT',
+                   'CROUCH')
+_COMMON_KEYS = ('LMB', 'RMB', 'SCROLL', 'SPACE','SHIFT', 'W',
+                'A', 'S', 'D', 'Q', 'E', 'I', 'ESC')
 
-_COMMON = ('JUMP', 'FORWARD', 'BACKWARD', 'LEFT', 'RIGHT'
-           'LMB', 'RMB', 'SCROLL')
-_COMMON_KEYS = ('LMB')
+mouse = mouse.Controller()
+keyboard = keyboard.Controller()
