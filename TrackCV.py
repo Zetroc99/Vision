@@ -79,7 +79,7 @@ class TrackCV:
 
         self.showText = showText
 
-    def track(self, frame_width=1280, frame_height=800, min_dc=0.8, max_tc=0.8):
+    def track(self, frame_width=1280, frame_height=720, min_dc=0.8, max_tc=0.8):
         # TODO finish documentation
         # TODO make flip an arg if showText is False
         """
@@ -87,27 +87,20 @@ class TrackCV:
         :return:
         """
 
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
         with self.mp_holistic.Holistic(min_detection_confidence=min_dc,
                                        min_tracking_confidence=max_tc) as holistic:
             while cap.isOpened():
-                success, frame = cap.read()  # read video capture
+                success, image = cap.read()  # read video capture
                 if not success:
                     print("Ignoring empty camera frame.")
                     # If loading a video, use 'break' instead of 'continue'.
                     break
 
-                # Recolor Image
-                image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                image.flags.writeable = False
-
                 # Make detection
                 results = holistic.process(image)
-
-                # Recolor back to BGR
-                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
                 image.flags.writeable = True
 
                 try:  # pose calculations
