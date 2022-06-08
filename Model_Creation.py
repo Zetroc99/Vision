@@ -30,3 +30,40 @@ while cap.isOpened():
 cap.release()
 cv.destroyAllWindows()
 cv.waitKey(1)
+
+import cv2 as cv
+import numpy as np
+import copy
+
+# SOME CODE FOR JUMPING WITH HAND TRACKING
+    # IF RIGHT HAND IN FIST IS RAISED:
+        # PRESS SPACE BAR
+
+points = np.array([[500, 500], [1000, 500], [1000, 1000],  [500, 1000]])  # points will come from detection rectangle
+(x, y, w, h) = cv.boundingRect(points)
+
+points = points - points.min(axis=0)
+
+# Initialize the webcam
+cap = cv.VideoCapture(0)
+
+while True:
+    # Read each frame from the webcam
+    success, frame = cap.read()
+    gray_img = cv.cvtColor(frame, cv.COLOR_RGB2GRAY)
+    blur = cv.GaussianBlur(gray_img, (41, 41), 0)
+    ret, thresh = cv.threshold(blur, 100, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)
+
+    mask = np.zeros(frame.shape, np.uint8)
+    cv.drawContours(mask, [points], -1, (255, 255, 255), -1, cv.LINE_AA)
+    result = cv.bitwise_and(frame, mask)
+
+    cv.imshow("Output", thresh)
+
+    if cv.waitKey(1) == ord('q'):
+        break
+
+# release the webcam and destroy all active windows
+cap.release()
+cv.destroyAllWindows()
+cv.waitKey(1)

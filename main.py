@@ -1,9 +1,9 @@
 import cv2 as cv
 import mediapipe as mp
-import pyautogui
-import pydirectinput
-import numpy as np
-import time
+# import pyautogui
+# import pydirectinput
+# import numpy as np
+# import time
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -22,7 +22,7 @@ def get_bbox_coordinates(landmarks, width, height):
         all_y)  # return as (xmin, ymin, xmax, ymax)
 
 
-cap = cv.VideoCapture(0, cv.CAP_DSHOW)
+cap = cv.VideoCapture(0)
 cap.set(3, 2560)
 cap.set(4, 1440)
 w = 2560
